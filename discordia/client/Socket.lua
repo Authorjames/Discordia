@@ -2,7 +2,6 @@ local jit = require('jit')
 local json = require('json')
 local timer = require('timer')
 local websocket = require('coro-websocket')
-local EventHandler = require('./EventHandler')
 local Stopwatch = require('../utils/Stopwatch')
 
 local format = string.format
@@ -11,15 +10,6 @@ local encode, decode = json.encode, json.decode
 local wrap, yield = coroutine.wrap, coroutine.yield
 local parseUrl, connect = websocket.parseUrl, websocket.connect
 local sleep, setInterval, clearInterval = timer.sleep, timer.setInterval, timer.clearInterval
-
-local ignore = {
-	['MESSAGE_ACK'] = true,
-	['CHANNEL_PINS_ACK'] = true,
-	['CHANNEL_PINS_UPDATE'] = true,
-	['GUILD_INTEGRATIONS_UPDATE'] = true,
-	['MESSAGE_REACTION_REMOVE_ALL'] = true,
-	['WEBHOOKS_UPDATE'] = true,
-}
 
 local Socket = class('Socket')
 
@@ -73,23 +63,12 @@ function Socket:handlePayloads(token)
 
 	for data in self._read do
 
-		local str = data.payload
-		local payload = decode(str)
-
-		client:emit('raw', payload, str)
-
+		local payload = decode(data.payload)
 		local op = payload.op
 
 		if op == 0 then
 			self._seq = payload.s
-			if not ignore[payload.t] then
-				local handler = EventHandler[payload.t]
-				if handler then
-					handler(payload.d, client)
-				else
-					client:warning('Unhandled event: ' .. payload.t)
-				end
-			end
+			client:emit(payload.t, payload.d)
 		elseif op == 1 then
 			self:heartbeat()
 		elseif op == 7 then
