@@ -1,12 +1,12 @@
 local json = require('json')
-local timer = require('timer')
+-- local timer = require('timer')
 local http = require('coro-http')
 local package = require('../package')
 local Mutex = require('../utils/Mutex')
 
 local format = string.format
 local request = http.request
-local setTimeout = timer.setTimeout
+-- local setTimeout = timer.setTimeout
 local max, random = math.max, math.random
 local encode, decode = json.encode, json.decode
 local insert, concat = table.insert, table.concat
@@ -66,8 +66,8 @@ local API = class('API')
 function API:__init(client)
 	self._client = client
 	self._route_delay = client._options.routeDelay
-	self._global_delay = client._options.globalDelay
-	self._global_mutex = Mutex()
+	-- self._global_delay = client._options.globalDelay
+	-- self._global_mutex = Mutex()
 	self._route_mutexes = {}
 	self._user_agent = format('DiscordBot (%s, %s)', package.homepage, package.version)
 end
@@ -107,13 +107,13 @@ function API:commit(method, url, reqHeaders, payload, routeMutex, attempts)
 
 	local isRetry = attempts > 1
 	local routeDelay = self._route_delay
-	local globalDelay = self._global_delay
-	local globalMutex = self._global_mutex
+	-- local globalDelay = self._global_delay
+	-- local globalMutex = self._global_mutex
 
 	routeMutex:lock(isRetry)
-	if self._globally_limited or globalMutex._active then
-		globalMutex:lock(isRetry)
-	end
+	-- if self._globally_limited or globalMutex._active then
+	-- 	globalMutex:lock(isRetry)
+	-- end
 
 	local res, str = request(method, url, reqHeaders, payload)
 
@@ -137,18 +137,18 @@ function API:commit(method, url, reqHeaders, payload, routeMutex, attempts)
 	if not success then
 		self._client:warning(format('%i / %s / %s\n%s %s', res.code, res.reason, data.message, method, url))
 		if res.code == 429 then
-			if data.global then
-				if not self._globally_limited then
-					if not globalMutex._active then
-						globalMutex:lock(isRetry)
-					end
-					self._globally_limited = true
-					setTimeout(data.retry_after, function()
-						self._globally_limited = false
-					end)
-				end
-				globalDelay = data.retry_after
-			end
+			-- if data.global then
+			-- 	if not self._globally_limited then
+			-- 		if not globalMutex._active then
+			-- 			globalMutex:lock(isRetry)
+			-- 		end
+			-- 		self._globally_limited = true
+			-- 		setTimeout(data.retry_after, function()
+			-- 			self._globally_limited = false
+			-- 		end)
+			-- 	end
+			-- 	globalDelay = data.retry_after
+			-- end
 			routeDelay = data.retry_after
 			shouldRetry = attempts < 6
 		elseif res.code == 502 then
@@ -158,9 +158,9 @@ function API:commit(method, url, reqHeaders, payload, routeMutex, attempts)
 	end
 
 	routeMutex:unlockAfter(routeDelay)
-	if globalMutex._active then
-		globalMutex:unlockAfter(globalDelay)
-	end
+	-- if globalMutex._active then
+	-- 	globalMutex:unlockAfter(globalDelay)
+	-- end
 
 	if shouldRetry then
 		return self:commit(method, url, reqHeaders, payload, routeMutex, attempts + 1)
