@@ -24,21 +24,6 @@ local defaultOptions = {
 	dateTime = '%c',
 }
 
-local function handleReady(self, data)
-	self._socket._session_id = data.session_id
-	if data.user.bot then
-		self._api._token = 'Bot ' .. self._api._token
-	else
-		local guild_ids = {}
-		for _, guild in ipairs(data.guilds) do
-			if not guild.unavailable then
-				insert(guild_ids, guild.id)
-			end
-		end
-		self._socket:syncGuilds(guild_ids)
-	end
-end
-
 local Client, property, method = class('Client', Emitter)
 Client.__description = "The main point of entry into a Discordia application."
 
@@ -59,7 +44,6 @@ function Client:__init(customOptions)
 	end
 	self._api = API(self)
 	self._socket = Socket(self)
-	self:once('READY', bind(handleReady, self))
 end
 
 function Client:__tostring()
@@ -81,7 +65,7 @@ end
 
 function Client:error(message)
 	if self._listeners['error'] then return self:emit('error', message) end
-	log(traceback(running(), message, 2), 'failure')
+	log(self, traceback(running(), message, 2), 'failure')
 	return exit()
 end
 
@@ -99,11 +83,16 @@ local function getToken(self, email, password)
 	end
 end
 
-local function run(self, a, b)
+local function run(self, token, other)
 	return wrap(function()
-		local token = not b and a or getToken(self, a, b)
-		if not token then return end
-		self._api:setToken(token)
+		if not other then
+			token = self._api:setToken(token)
+			if not token then
+				return self:error('Invalid token provided')
+			end
+		else
+			token = getToken(self, token, other)
+		end
 		return self:_connectToGateway(token)
 	end)()
 end

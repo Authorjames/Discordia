@@ -61,6 +61,10 @@ function Socket:handlePayloads(token)
 
 	local client = self._client
 
+	client:once('READY', function(d)
+		self._session_id = d.session_id
+	end)
+
 	for data in self._read do
 
 		local payload = decode(data.payload)
