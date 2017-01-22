@@ -12,12 +12,8 @@ local wrap, running = coroutine.wrap, coroutine.running
 
 local defaultOptions = {
 	routeDelay = 300,
-	globalDelay = 10,
-	messageLimit = 100,
 	largeThreshold = 100,
-	fetchMembers = false,
 	autoReconnect = true,
-	bitrate = 64000,
 	dateTime = '%c',
 }
 
@@ -41,14 +37,6 @@ function Client:__init(customOptions)
 	end
 	self._api = API(self)
 	self._socket = Socket(self)
-end
-
-function Client:__tostring()
-	if self._user then
-		return 'instance of Client for ' .. self._user._username
-	else
-		return 'instance of Client'
-	end
 end
 
 local function log(self, message, color)
@@ -76,7 +64,7 @@ local function run(self, token)
 	end)()
 end
 
-local function stop(self, shouldExit) -- should probably rename to disconnect
+local function stop(self, shouldExit)
 	if self._socket then self._socket:disconnect() end
 	if shouldExit then exit() end
 end

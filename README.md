@@ -3,11 +3,12 @@
 **Discord API library written in Lua for the Luvit runtime environment**
 
 This is a lightweight branch of Discordia that provides a minimal Lua library.
-- Gateway events are not automatically handled except for a partial `READY` handler
-- Client events are raw gateway events using `payload.t` and `payload.d`
+- Gateway event payloads are not automatically parsed
+- Client events are named `payload.t` and provide `payload.d`
 - REST API and WebSocket gateway methods are still available
-- No automatic caching, manual management is required
-- No container classes, raw tables should be used
+- No global ratelimiting (per-route limiting remains)
+- No automatic caching (manual management is required)
+- No container classes (raw tables should be used)
 - No voice features are provided
 
 ### Example
