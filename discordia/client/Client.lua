@@ -2,11 +2,8 @@ local API = require('./API')
 local Socket = require('./Socket')
 local Emitter = require('../utils/Emitter')
 local pp = require('pretty-print')
-local utils = require('utils')
 
 local open = io.open
-local bind = utils.bind
-local insert = table.insert
 local format = string.format
 local colorize = pp.colorize
 local traceback = debug.traceback
@@ -69,29 +66,11 @@ function Client:error(message)
 	return exit()
 end
 
-local function getToken(self, email, password)
-	self:warning('Email login is discouraged, use token login instead')
-	local success, data = self._api:getToken({email = email, password = password})
-	if success then
-		if data.token then
-			return data.token
-		elseif data.mfa then
-			self:error('MFA login is not supported')
-		end
-	else
-		self:error(data.email and data.email[1] or data.password and data.password[1])
-	end
-end
-
-local function run(self, token, other)
+local function run(self, token)
 	return wrap(function()
-		if not other then
-			token = self._api:setToken(token)
-			if not token then
-				return self:error('Invalid token provided')
-			end
-		else
-			token = getToken(self, token, other)
+		token = self._api:setToken(token)
+		if not token then
+			return self:error('Invalid token provided')
 		end
 		return self:_connectToGateway(token)
 	end)()

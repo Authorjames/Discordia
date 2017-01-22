@@ -602,11 +602,6 @@ end
 
 -- end of auto-generated methods --
 
-function API:getToken(payload)
-	local route = "/auth/login"
-	return self:request('POST', route, route, payload)
-end
-
 function API:modifyCurrentUserNickname(guild_id, payload)
 	local route = format("/guilds/%s/members/@me/nick", guild_id)
 	return self:request('PATCH', route, route, payload)
